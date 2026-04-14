@@ -1,0 +1,12 @@
+# Environment
+.env
+
+# Go
+/arise-bank
+*.exe
+*.out
+
+# IDE
+.idea/
+.vscode/
+*.swp
