@@ -67,6 +67,11 @@ type mockAccountService struct {
 	mock.Mock
 }
 
+func (m *mockAccountService) GetAll(ctx context.Context) ([]account.AccountResponse, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]account.AccountResponse), args.Error(1)
+}
+
 func (m *mockAccountService) GetByID(ctx context.Context, id int) (*account.AccountResponse, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {

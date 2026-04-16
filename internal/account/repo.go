@@ -12,6 +12,7 @@ type repo struct {
 }
 
 type Repo interface {
+	GetAll(ctx context.Context) ([]Account, error)
 	GetByID(ctx context.Context, id int) (*Account, error)
 	GetByCustomerID(ctx context.Context, customerID int) ([]Account, error)
 	Create(ctx context.Context, account *Account) error
@@ -21,6 +22,12 @@ type Repo interface {
 func newRepo(db *gorm.DB) Repo {
 	return &repo{db: db}
 
+}
+
+func (r *repo) GetAll(ctx context.Context) ([]Account, error) {
+	var accounts []Account
+	err := r.db.WithContext(ctx).Find(&accounts).Error
+	return accounts, err
 }
 
 func (r *repo) GetByID(ctx context.Context, id int) (*Account, error) {

@@ -19,8 +19,18 @@ func NewHandler(service Service) *Handler {
 func (h *Handler) RegisterRoutes(r *gin.RouterGroup) {
 	g := r.Group("/accounts")
 	g.POST("", h.CreateAccount)
+	g.GET("", h.GetAllAccounts)
 	g.GET("/:id", h.GetAccount)
 	g.GET("/customer/:customer_id", h.GetAccountsByCustomer)
+}
+
+func (h *Handler) GetAllAccounts(c *gin.Context) {
+	accounts, err := h.service.GetAll(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+	c.JSON(http.StatusOK, accounts)
 }
 
 func (h *Handler) CreateAccount(c *gin.Context) {

@@ -14,6 +14,11 @@ type mockRepo struct {
 	mock.Mock
 }
 
+func (m *mockRepo) GetAll(ctx context.Context) ([]Account, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]Account), args.Error(1)
+}
+
 func (m *mockRepo) GetByID(ctx context.Context, id int) (*Account, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
@@ -136,7 +141,7 @@ func TestCreateAccount_Success(t *testing.T) {
 			acc := args.Get(1).(*Account)
 			acc.ID = 1
 		})
-	c.On("Del", mock.Anything, []string{"account:customer:1"}).Return(nil)
+	c.On("Del", mock.Anything, []string{"account:customer:1", "account:all"}).Return(nil)
 
 	svc := newTestService(repo, c)
 	res, err := svc.CreateAccount(context.Background(), CreateAccountRequest{CustomerID: 1})
@@ -144,7 +149,7 @@ func TestCreateAccount_Success(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 1, res.ID)
 	assert.Equal(t, StatusActive, res.Status)
-	c.AssertCalled(t, "Del", mock.Anything, []string{"account:customer:1"}) // invalidate list cache
+	c.AssertCalled(t, "Del", mock.Anything, []string{"account:customer:1", "account:all"}) // invalidate list cache + all cache
 }
 
 func TestCreateAccount_RepoError(t *testing.T) {
@@ -202,6 +207,53 @@ func TestGetByCustomerID_RepoError(t *testing.T) {
 
 	svc := newTestService(repo, c)
 	res, err := svc.GetByCustomerID(context.Background(), 1)
+
+	assert.Nil(t, res)
+	assert.Error(t, err)
+}
+
+func TestGetAll_CacheHit(t *testing.T) {
+	repo := new(mockRepo)
+	c := new(mockCache)
+
+	cached := `[{"id":1,"customer_id":1,"number":"1234567890","balance":1000,"status":"ACTIVE","created_at":"0001-01-01T00:00:00Z"}]`
+	c.On("Get", mock.Anything, "account:all").Return(cached, nil)
+
+	svc := newTestService(repo, c)
+	res, err := svc.GetAll(context.Background())
+
+	assert.NoError(t, err)
+	assert.Len(t, res, 1)
+	repo.AssertNotCalled(t, "GetAll")
+}
+
+func TestGetAll_CacheMiss(t *testing.T) {
+	repo := new(mockRepo)
+	c := new(mockCache)
+
+	accounts := []Account{*stubAccount()}
+	c.On("Get", mock.Anything, "account:all").Return("", errors.New("cache miss"))
+	repo.On("GetAll", mock.Anything).Return(accounts, nil)
+	c.On("Set", mock.Anything, "account:all", mock.Anything, accountCacheTTL).Return(nil)
+
+	svc := newTestService(repo, c)
+	res, err := svc.GetAll(context.Background())
+
+	assert.NoError(t, err)
+	assert.Len(t, res, 1)
+	repo.AssertCalled(t, "GetAll", mock.Anything)
+	c.AssertCalled(t, "Set", mock.Anything, "account:all", mock.Anything, accountCacheTTL)
+}
+
+func TestGetAll_RepoError(t *testing.T) {
+	repo := new(mockRepo)
+	c := new(mockCache)
+
+	c.On("Get", mock.Anything, "account:all").Return("", errors.New("cache miss"))
+	repo.On("GetAll", mock.Anything).Return([]Account{}, errors.New("db error"))
+
+	svc := newTestService(repo, c)
+	res, err := svc.GetAll(context.Background())
 
 	assert.Nil(t, res)
 	assert.Error(t, err)
