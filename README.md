@@ -54,6 +54,22 @@ curl -X PATCH http://localhost:8080/api/v1/customers/1 \
   -d '{"first_name":"สมหญิง"}'
 ```
 
+**Unit Tests**
+
+| Test | สิ่งที่ verify |
+|---|---|
+| `GET /customers/:id` — `TestGetByID_CacheHit` | คืนข้อมูลจาก cache โดยไม่แตะ DB |
+| `GET /customers/:id` — `TestGetByID_CacheMiss` | ดึงจาก DB แล้ว set cache |
+| `GET /customers/:id` — `TestGetByID_NotFound` | คืน error `ErrCustomerNotFound` |
+| `POST /customers` — `TestCreateCustomer_Success` | สร้างลูกค้าสำเร็จ คืน id ที่ DB generate ให้ |
+| `POST /customers` — `TestCreateCustomer_EmailAlreadyExists` | คืน `ErrEmailAlreadyExists` ไม่เรียก Create |
+| `POST /customers` — `TestCreateCustomer_GetByEmailError` | DB error ระหว่างเช็ค email → คืน error ไม่เรียก Create |
+| `POST /customers` — `TestCreateCustomer_RepoError` | DB error ระหว่าง insert → คืน error |
+| `PATCH /customers/:id` — `TestUpdateCustomer_Success` | อัปเดตสำเร็จ invalidate cache |
+| `PATCH /customers/:id` — `TestUpdateCustomer_PartialUpdate` | ส่งมาแค่ field เดียว field อื่นไม่เปลี่ยน |
+| `PATCH /customers/:id` — `TestUpdateCustomer_NotFound` | คืน `ErrCustomerNotFound` ไม่ invalidate cache |
+| `PATCH /customers/:id` — `TestUpdateCustomer_UpdateError` | DB error → คืน error ไม่ invalidate cache |
+
 ### Accounts
 
 ```
@@ -74,6 +90,19 @@ curl http://localhost:8080/api/v1/accounts/1
 # ดูบัญชีทั้งหมดของลูกค้า
 curl http://localhost:8080/api/v1/accounts/customer/1
 ```
+
+**Unit Tests**
+
+| Test | สิ่งที่ verify |
+|---|---|
+| `GET /accounts/:id` — `TestGetByID_CacheHit` | คืนข้อมูลจาก cache โดยไม่แตะ DB |
+| `GET /accounts/:id` — `TestGetByID_CacheMiss` | ดึงจาก DB แล้ว set cache |
+| `GET /accounts/:id` — `TestGetByID_NotFound` | คืน error `ErrAccountNotFound` |
+| `GET /accounts/customer/:id` — `TestGetByCustomerID_CacheHit` | คืน list จาก cache โดยไม่แตะ DB |
+| `GET /accounts/customer/:id` — `TestGetByCustomerID_CacheMiss` | ดึงจาก DB แล้ว set cache |
+| `GET /accounts/customer/:id` — `TestGetByCustomerID_RepoError` | DB error → คืน error |
+| `POST /accounts` — `TestCreateAccount_Success` | สร้างบัญชีสำเร็จ status เป็น ACTIVE invalidate list cache |
+| `POST /accounts` — `TestCreateAccount_RepoError` | DB error → คืน error ไม่ invalidate cache |
 
 ### Transactions
 
@@ -105,6 +134,21 @@ curl -X POST http://localhost:8080/api/v1/transactions/transfer \
 # ดูประวัติธุรกรรมของบัญชี
 curl http://localhost:8080/api/v1/transactions/account/1
 ```
+
+**Unit Tests**
+
+| Test | สิ่งที่ verify |
+|---|---|
+| `POST /deposit` — `TestDeposit_Success` | ฝากเงินสำเร็จ invalidate tx cache + account cache |
+| `POST /deposit` — `TestDeposit_RepoError` | คืน `ErrAccountNotActive` ไม่ invalidate cache |
+| `POST /withdraw` — `TestWithdraw_Success` | ถอนเงินสำเร็จ invalidate tx cache + account cache |
+| `POST /withdraw` — `TestWithdraw_InsufficientBalance` | คืน `ErrInsufficientBalance` ไม่ invalidate cache |
+| `POST /transfer` — `TestTransfer_Success` | โอนเงินสำเร็จ invalidate cache ทั้ง 2 บัญชีพร้อมกัน |
+| `POST /transfer` — `TestTransfer_SameAccount` | คืน `ErrSameAccount` ไม่แตะ DB เลย |
+| `POST /transfer` — `TestTransfer_InsufficientBalance` | คืน `ErrInsufficientBalance` ไม่ invalidate cache |
+| `GET /account/:id` — `TestGetByAccountID_CacheHit` | คืน list จาก cache โดยไม่แตะ DB |
+| `GET /account/:id` — `TestGetByAccountID_CacheMiss` | ดึงจาก DB แล้ว set cache |
+| `GET /account/:id` — `TestGetByAccountID_RepoError` | DB error → คืน error |
 
 **Error responses**
 
