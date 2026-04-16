@@ -185,7 +185,8 @@ func TestTransfer_Success(t *testing.T) {
 	accountSvc := new(mockAccountService)
 
 	req := TransferRequest{FromAccountID: 1, ToAccountID: 2, Amount: 10000}
-	tx := &Transaction{ID: 1, FromAccountID: 1, ToAccountID: 2, Amount: 10000, Type: TypeTransfer}
+	fromID, toID := 1, 2
+	tx := &Transaction{ID: 1, FromAccountID: &fromID, ToAccountID: &toID, Amount: 10000, Type: TypeTransfer}
 
 	repo.On("Transfer", mock.Anything, req).Return(tx, nil)
 	c.On("Del", mock.Anything, []string{"transaction:account:1", "transaction:account:2"}).Return(nil)

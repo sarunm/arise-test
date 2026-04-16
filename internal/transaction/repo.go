@@ -46,8 +46,9 @@ func (r *repo) Deposit(ctx context.Context, req DepositRequest) (*Transaction, e
 			return err
 		}
 
+		toID := req.AccountID
 		tx = Transaction{
-			ToAccountID: req.AccountID,
+			ToAccountID: &toID,
 			Amount:      req.Amount,
 			Type:        TypeDeposit,
 		}
@@ -85,8 +86,9 @@ func (r *repo) Withdraw(ctx context.Context, req WithdrawRequest) (*Transaction,
 			return err
 		}
 
+		fromID := req.AccountID
 		tx = Transaction{
-			FromAccountID: req.AccountID,
+			FromAccountID: &fromID,
 			Amount:        req.Amount,
 			Type:          TypeWithdraw,
 		}
@@ -147,9 +149,10 @@ func (r *repo) Transfer(ctx context.Context, req TransferRequest) (*Transaction,
 			return err
 		}
 
+		fromID, toID := req.FromAccountID, req.ToAccountID
 		tx = Transaction{
-			FromAccountID: req.FromAccountID,
-			ToAccountID:   req.ToAccountID,
+			FromAccountID: &fromID,
+			ToAccountID:   &toID,
 			Amount:        req.Amount,
 			Type:          TypeTransfer,
 		}

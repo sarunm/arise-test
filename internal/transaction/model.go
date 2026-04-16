@@ -7,8 +7,8 @@ import (
 
 type Transaction struct {
 	ID            int       `gorm:"primaryKey"`
-	FromAccountID int       `gorm:"index"`
-	ToAccountID   int       `gorm:"index"`
+	FromAccountID *int      `gorm:"index"`
+	ToAccountID   *int      `gorm:"index"`
 	Amount        int64     `gorm:"not null"`
 	Type          Type      `gorm:"type:transaction_type;not null"`
 	CreatedAt     time.Time
@@ -54,12 +54,17 @@ type TransactionResponse struct {
 }
 
 func (t *Transaction) ToResponse() TransactionResponse {
-	return TransactionResponse{
-		ID:            t.ID,
-		FromAccountID: t.FromAccountID,
-		ToAccountID:   t.ToAccountID,
-		Amount:        float64(t.Amount) / 100,
-		Type:          t.Type,
-		CreatedAt:     t.CreatedAt,
+	resp := TransactionResponse{
+		ID:        t.ID,
+		Amount:    float64(t.Amount) / 100,
+		Type:      t.Type,
+		CreatedAt: t.CreatedAt,
 	}
+	if t.FromAccountID != nil {
+		resp.FromAccountID = *t.FromAccountID
+	}
+	if t.ToAccountID != nil {
+		resp.ToAccountID = *t.ToAccountID
+	}
+	return resp
 }
