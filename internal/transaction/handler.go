@@ -1,6 +1,7 @@
 package transaction
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -80,8 +81,10 @@ func (h *Handler) GetByAccountID(c *gin.Context) {
 }
 
 func (h *Handler) handleError(c *gin.Context, err error) {
-	switch err {
-	case ErrInsufficientBalance, ErrAccountNotActive, ErrSameAccount:
+	switch {
+	case errors.Is(err, ErrInsufficientBalance),
+		errors.Is(err, ErrAccountNotActive),
+		errors.Is(err, ErrSameAccount):
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 	default:
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})

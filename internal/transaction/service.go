@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/sarunm/arise-test/internal/account"
@@ -68,12 +69,24 @@ func (s *service) Transfer(ctx context.Context, req TransferRequest) (*Transacti
 		return nil, err
 	}
 
-	s.cache.Del(ctx,
-		fmt.Sprintf(txCacheKey, req.FromAccountID),
-		fmt.Sprintf(txCacheKey, req.ToAccountID),
-	)
-	s.accountSvc.InvalidateCache(ctx, req.FromAccountID)
-	s.accountSvc.InvalidateCache(ctx, req.ToAccountID)
+	var wg sync.WaitGroup
+	wg.Add(3)
+	go func() {
+		defer wg.Done()
+		s.cache.Del(ctx,
+			fmt.Sprintf(txCacheKey, req.FromAccountID),
+			fmt.Sprintf(txCacheKey, req.ToAccountID),
+		)
+	}()
+	go func() {
+		defer wg.Done()
+		s.accountSvc.InvalidateCache(ctx, req.FromAccountID)
+	}()
+	go func() {
+		defer wg.Done()
+		s.accountSvc.InvalidateCache(ctx, req.ToAccountID)
+	}()
+	wg.Wait()
 
 	res := tx.ToResponse()
 	return &res, nil

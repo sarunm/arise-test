@@ -1,6 +1,7 @@
 package customer
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -31,8 +32,8 @@ func (h *Handler) CreateCustomer(c *gin.Context) {
 
 	customer, err := h.service.CreateCustomer(c.Request.Context(), req)
 	if err != nil {
-		switch err {
-		case ErrEmailAlreadyExists:
+		switch {
+		case errors.Is(err, ErrEmailAlreadyExists):
 			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
@@ -52,8 +53,8 @@ func (h *Handler) GetCustomer(c *gin.Context) {
 
 	customer, err := h.service.GetByID(c.Request.Context(), id)
 	if err != nil {
-		switch err {
-		case ErrCustomerNotFound:
+		switch {
+		case errors.Is(err, ErrCustomerNotFound):
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
@@ -79,8 +80,8 @@ func (h *Handler) UpdateCustomer(c *gin.Context) {
 
 	customer, err := h.service.UpdateCustomer(c.Request.Context(), id, req)
 	if err != nil {
-		switch err {
-		case ErrCustomerNotFound:
+		switch {
+		case errors.Is(err, ErrCustomerNotFound):
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})

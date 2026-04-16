@@ -1,6 +1,7 @@
 package account
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -47,8 +48,8 @@ func (h *Handler) GetAccount(c *gin.Context) {
 
 	account, err := h.service.GetByID(c.Request.Context(), id)
 	if err != nil {
-		switch err {
-		case ErrAccountNotFound:
+		switch {
+		case errors.Is(err, ErrAccountNotFound):
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
