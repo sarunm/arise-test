@@ -6,7 +6,7 @@ import (
 )
 
 type Account struct {
-	ID         int       `gorm:"column:id" gorm:"primaryKey"`
+	ID         int       `gorm:"column:id;primaryKey"`
 	CustomerID int       `gorm:"column:customer_id"`
 	Number     string    `gorm:"column:number"`
 	Balance    int64     `gorm:"column:balance"`

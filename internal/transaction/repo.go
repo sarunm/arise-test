@@ -42,7 +42,7 @@ func (r *repo) Deposit(ctx context.Context, req DepositRequest) (*Transaction, e
 		}
 
 		acc.Balance += req.Amount
-		if err := db.Save(&acc).Error; err != nil {
+		if err := db.Model(&acc).Update("balance", acc.Balance).Error; err != nil {
 			return err
 		}
 
@@ -81,7 +81,7 @@ func (r *repo) Withdraw(ctx context.Context, req WithdrawRequest) (*Transaction,
 		}
 
 		acc.Balance -= req.Amount
-		if err := db.Save(&acc).Error; err != nil {
+		if err := db.Model(&acc).Update("balance", acc.Balance).Error; err != nil {
 			return err
 		}
 
@@ -140,10 +140,10 @@ func (r *repo) Transfer(ctx context.Context, req TransferRequest) (*Transaction,
 		from.Balance -= req.Amount
 		to.Balance += req.Amount
 
-		if err := db.Save(from).Error; err != nil {
+		if err := db.Model(from).Update("balance", from.Balance).Error; err != nil {
 			return err
 		}
-		if err := db.Save(to).Error; err != nil {
+		if err := db.Model(to).Update("balance", to.Balance).Error; err != nil {
 			return err
 		}
 

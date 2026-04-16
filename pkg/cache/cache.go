@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -25,6 +26,10 @@ func New() Cache {
 			os.Getenv("REDIS_HOST"),
 			os.Getenv("REDIS_PORT"),
 		),
+		PoolSize:        envInt("REDIS_POOL_SIZE", 20),
+		MinIdleConns:    envInt("REDIS_MIN_IDLE_CONNS", 5),
+		ConnMaxLifetime: time.Duration(envInt("REDIS_CONN_MAX_LIFETIME_MIN", 30)) * time.Minute,
+		ConnMaxIdleTime: time.Duration(envInt("REDIS_CONN_MAX_IDLE_TIME_MIN", 5)) * time.Minute,
 	})
 	return &redisCache{client: client}
 }
@@ -39,4 +44,11 @@ func (c *redisCache) Get(ctx context.Context, key string) (string, error) {
 
 func (c *redisCache) Del(ctx context.Context, keys ...string) error {
 	return c.client.Del(ctx, keys...).Err()
+}
+
+func envInt(key string, fallback int) int {
+	if v, err := strconv.Atoi(os.Getenv(key)); err == nil {
+		return v
+	}
+	return fallback
 }

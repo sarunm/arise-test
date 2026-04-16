@@ -8,13 +8,21 @@ services:
       - "${APP_PORT}:8080"
     environment:
       - APP_ENV=${APP_ENV}
-      - DB_HOST=postgres
-      - DB_PORT=5432
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
       - DB_USER=${POSTGRES_USER}
       - DB_PASSWORD=${POSTGRES_PASSWORD}
       - DB_NAME=${POSTGRES_DB}
-      - REDIS_HOST=redis
+      - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}
+      - DB_MAX_OPEN_CONNS=${DB_MAX_OPEN_CONNS}
+      - DB_MAX_IDLE_CONNS=${DB_MAX_IDLE_CONNS}
+      - DB_CONN_MAX_LIFETIME_MIN=${DB_CONN_MAX_LIFETIME_MIN}
+      - DB_CONN_MAX_IDLE_TIME_MIN=${DB_CONN_MAX_IDLE_TIME_MIN}
+      - REDIS_POOL_SIZE=${REDIS_POOL_SIZE}
+      - REDIS_MIN_IDLE_CONNS=${REDIS_MIN_IDLE_CONNS}
+      - REDIS_CONN_MAX_LIFETIME_MIN=${REDIS_CONN_MAX_LIFETIME_MIN}
+      - REDIS_CONN_MAX_IDLE_TIME_MIN=${REDIS_CONN_MAX_IDLE_TIME_MIN}
     depends_on:
       postgres:
         condition: service_healthy
