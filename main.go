@@ -8,6 +8,7 @@ import (
 	"github.com/sarunm/arise-test/internal/account"
 	"github.com/sarunm/arise-test/internal/customer"
 	"github.com/sarunm/arise-test/internal/transaction"
+	"github.com/sarunm/arise-test/pkg/cache"
 	"github.com/sarunm/arise-test/pkg/database"
 )
 
@@ -18,10 +19,13 @@ func main() {
 		log.Fatalf("failed to connect database: %v", err)
 	}
 
+	// Cache
+	c := cache.New()
+
 	// Modules
-	customerMod    := customer.NewModule(db)
-	accountMod     := account.NewModule(db)
-	transactionMod := transaction.NewModule(db)
+	customerMod    := customer.NewModule(db, c)
+	accountMod     := account.NewModule(db, c)
+	transactionMod := transaction.NewModule(db, c, accountMod.Service)
 
 	// Router
 	r := gin.Default()

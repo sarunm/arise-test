@@ -2,6 +2,7 @@ package customer
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/sarunm/arise-test/pkg/cache"
 	"gorm.io/gorm"
 )
 
@@ -10,9 +11,9 @@ type Module struct {
 	Handler *Handler
 }
 
-func NewModule(db *gorm.DB) *Module {
+func NewModule(db *gorm.DB, cache cache.Cache) *Module {
 	repo    := newRepo(db)
-	service := NewService(repo)
+	service := NewService(repo, cache)
 	handler := NewHandler(service)
 
 	return &Module{
