@@ -1,8 +1,13 @@
 package main
 
 import (
+	"context"
 	"log"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sarunm/arise-test/internal/account"
@@ -23,8 +28,8 @@ func main() {
 	c := cache.New()
 
 	// Modules
-	customerMod    := customer.NewModule(db, c)
-	accountMod     := account.NewModule(db, c)
+	customerMod := customer.NewModule(db, c)
+	accountMod := account.NewModule(db, c)
 	transactionMod := transaction.NewModule(db, c, accountMod.Service)
 
 	// Router
@@ -35,13 +40,36 @@ func main() {
 	accountMod.RegisterRoutes(v1)
 	transactionMod.RegisterRoutes(v1)
 
-	// Start
+	// Server
 	port := os.Getenv("APP_PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	if err := r.Run(":" + port); err != nil {
-		log.Fatalf("failed to start server: %v", err)
+	srv := &http.Server{
+		Addr:    ":" + port,
+		Handler: r,
 	}
+
+	go func() {
+		log.Printf("server starting on port %s", port)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("failed to start server: %v", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("server forced to shutdown: %v", err)
+	}
+
+	log.Println("server exited")
 }
