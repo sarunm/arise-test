@@ -43,7 +43,7 @@ func (s *service) GetByCustomerID(ctx context.Context, customerID int) ([]Accoun
 }
 
 func (s *service) CreateAccount(ctx context.Context, req CreateAccountRequest) (*AccountResponse, error) {
-	account := Account{
+	account := &Account{
 		CustomerID: req.CustomerID,
 		Number:     generateAccountNumber(),
 		Status:     StatusActive,

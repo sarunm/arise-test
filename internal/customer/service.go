@@ -37,7 +37,7 @@ func (s *service) CreateCustomer(ctx context.Context, req CreateCustomerRequest)
 		return nil, ErrEmailAlreadyExists
 	}
 
-	customer := Customer{
+	customer := &Customer{
 		FirstName: req.FirstName,
 		LastName:  req.LastName,
 		Email:     req.Email,
@@ -64,7 +64,7 @@ func (s *service) UpdateCustomer(ctx context.Context, id int, req UpdateCustomer
 		customer.LastName = req.LastName
 	}
 
-	if err := s.repo.Update(ctx, *customer); err != nil {
+	if err := s.repo.Update(ctx, customer); err != nil {
 		return nil, err
 	}
 

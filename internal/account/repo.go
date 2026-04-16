@@ -15,8 +15,8 @@ type Repo interface {
 	GetByID(ctx context.Context, id int) (*Account, error)
 	GetByCustomerID(ctx context.Context, customerID int) ([]Account, error)
 	GetByAccountNumber(ctx context.Context, accountNumber string) (*Account, error)
-	Create(ctx context.Context, account Account) error
-	Update(ctx context.Context, account Account) error
+	Create(ctx context.Context, account *Account) error
+	Update(ctx context.Context, account *Account) error
 }
 
 func newRepo(db *gorm.DB) Repo {
@@ -53,10 +53,10 @@ func (r *repo) GetByAccountNumber(ctx context.Context, accountNumber string) (*A
 	return &account, nil
 }
 
-func (r *repo) Create(ctx context.Context, account Account) error {
-	return r.db.WithContext(ctx).Create(&account).Error
+func (r *repo) Create(ctx context.Context, account *Account) error {
+	return r.db.WithContext(ctx).Create(account).Error
 }
 
-func (r *repo) Update(ctx context.Context, account Account) error {
-	return r.db.WithContext(ctx).Save(&account).Error
+func (r *repo) Update(ctx context.Context, account *Account) error {
+	return r.db.WithContext(ctx).Save(account).Error
 }
