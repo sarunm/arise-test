@@ -230,6 +230,41 @@ func TestUpdateCustomer_PartialUpdate(t *testing.T) {
 	})
 
 	assert.NoError(t, err)
-	assert.Equal(t, "สมชาย", res.FirstName) // FirstName คงเดิม
+	assert.Equal(t, "สมชาย", res.FirstName)
 	assert.Equal(t, "มั่งมี", res.LastName)
+}
+
+func TestUpdateCustomer_UpdateError(t *testing.T) {
+	repo := new(mockRepo)
+	c := new(mockCache)
+
+	repo.On("GetByID", mock.Anything, 1).Return(stubCustomer(), nil)
+	repo.On("Update", mock.Anything, mock.AnythingOfType("*customer.Customer")).Return(errors.New("db error"))
+
+	svc := newTestService(repo, c)
+	res, err := svc.UpdateCustomer(context.Background(), 1, UpdateCustomerRequest{
+		FirstName: "ใหม่",
+	})
+
+	assert.Nil(t, res)
+	assert.Error(t, err)
+	c.AssertNotCalled(t, "Del")
+}
+
+func TestCreateCustomer_GetByEmailError(t *testing.T) {
+	repo := new(mockRepo)
+	c := new(mockCache)
+
+	repo.On("GetByEmail", mock.Anything, "somchai@test.com").Return(nil, errors.New("db error"))
+
+	svc := newTestService(repo, c)
+	res, err := svc.CreateCustomer(context.Background(), CreateCustomerRequest{
+		FirstName: "สมชาย",
+		LastName:  "ใจดี",
+		Email:     "somchai@test.com",
+	})
+
+	assert.Nil(t, res)
+	assert.Error(t, err)
+	repo.AssertNotCalled(t, "Create")
 }

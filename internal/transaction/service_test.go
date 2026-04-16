@@ -260,3 +260,18 @@ func TestGetByAccountID_CacheMiss(t *testing.T) {
 	assert.Len(t, res, 1)
 	c.AssertCalled(t, "Set", mock.Anything, "transaction:account:1", mock.Anything, txCacheTTL)
 }
+
+func TestGetByAccountID_RepoError(t *testing.T) {
+	repo := new(mockRepo)
+	c := new(mockCache)
+	accountSvc := new(mockAccountService)
+
+	c.On("Get", mock.Anything, "transaction:account:1").Return("", errors.New("cache miss"))
+	repo.On("GetByAccountID", mock.Anything, 1).Return([]Transaction{}, errors.New("db error"))
+
+	svc := newTestService(repo, c, accountSvc)
+	res, err := svc.GetByAccountID(context.Background(), 1)
+
+	assert.Nil(t, res)
+	assert.Error(t, err)
+}

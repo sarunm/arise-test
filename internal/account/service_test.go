@@ -178,6 +178,35 @@ func TestGetByCustomerID_CacheMiss(t *testing.T) {
 	assert.Len(t, res, 1)
 }
 
+func TestGetByCustomerID_CacheHit(t *testing.T) {
+	repo := new(mockRepo)
+	c := new(mockCache)
+
+	cached := `[{"id":1,"customer_id":1,"number":"1234567890","balance":1000,"status":"ACTIVE","created_at":"0001-01-01T00:00:00Z"}]`
+	c.On("Get", mock.Anything, "account:customer:1").Return(cached, nil)
+
+	svc := newTestService(repo, c)
+	res, err := svc.GetByCustomerID(context.Background(), 1)
+
+	assert.NoError(t, err)
+	assert.Len(t, res, 1)
+	repo.AssertNotCalled(t, "GetByCustomerID")
+}
+
+func TestGetByCustomerID_RepoError(t *testing.T) {
+	repo := new(mockRepo)
+	c := new(mockCache)
+
+	c.On("Get", mock.Anything, "account:customer:1").Return("", errors.New("cache miss"))
+	repo.On("GetByCustomerID", mock.Anything, 1).Return([]Account{}, errors.New("db error"))
+
+	svc := newTestService(repo, c)
+	res, err := svc.GetByCustomerID(context.Background(), 1)
+
+	assert.Nil(t, res)
+	assert.Error(t, err)
+}
+
 func TestInvalidateCache(t *testing.T) {
 	repo := new(mockRepo)
 	c := new(mockCache)
